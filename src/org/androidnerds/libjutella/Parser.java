@@ -33,7 +33,7 @@ public static class Parser {
 		int textPos = msg.indexOf(" :");
 		
 		if (textPos != -1) {
-			message.setBody(msg.substring(textPos + 2));
+			message.setText(msg.substring(textPos + 2));
 			msg = msg.substring(0, textPos);
 		}
 		

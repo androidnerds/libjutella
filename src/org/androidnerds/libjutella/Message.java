@@ -29,7 +29,7 @@ public class Message {
 	private int command;
 	private String sender;
 	private String[] parameters;
-	private String body;
+	private String text;
 	private long timestamp;
 	
 	public Message() {
@@ -73,21 +73,21 @@ public class Message {
 	}
 	
 	/**
-	 * sets the body of the message
+	 * sets the text of the message
 	 *
 	 * @since 1
 	 */
-	protected void setBody(String b) {
-		body = b;
+	protected void setText(String t) {
+		text = t;
 	}
 	
 	/**
-	 * gets the body of the message
+	 * gets the text of the message
 	 *
 	 * @since 1
 	 */
-	public String getBody() {
-		return body;
+	public String getText() {
+		return text;
 	}
 	
 	/**

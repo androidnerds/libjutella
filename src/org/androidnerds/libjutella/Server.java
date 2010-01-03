@@ -136,7 +136,26 @@ public class Server {
 			
 			break;
 		case SERV_TOPIC:
-			Channel c;
+			Channel c = channels.get(message.getParams()[message.getParams().length - 1]);
+			c.addMessage(message);
+			
+			for (ServerListener sl : listeners) {
+				sl.onNewMessage(message, c);
+			}
+			break;
+		case SERV_TOPIC_SET:
+			Channel c = channels.get(message.getParams()[message.getParams().length - 1]);
+			String timestamp = message.getParams()[3];
+			SimpleDateFormat formatter = new SimpleDataFormat("MM dd, yyyy HH:mm:ss");
+			Date date = new Date(Long.parseLong(timestamp) * 1000);
+			String text = message.getParams()[2] + " - " + formatter.format(date);
+			
+			message.setText(text);
+			c.addMessage(message);
+			
+			for (ServerListener sl : listeners) {
+				sl.onNewMessage(message, c);
+			}
 			break;
 		}
 	}
@@ -168,7 +187,7 @@ public class Server {
 		 * @since 1
 		 * @see Message
 		 */
-		public void onNewMessage(Message msg);
+		public void onNewMessage(Message msg, Channel chan);
 		
 		/**
 		 * The onJoinChannel method receives a new Channel object that is created
