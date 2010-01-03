@@ -44,7 +44,8 @@ public class Connection implements Runnable {
 	}
 	
 	public void disconnect() {
-		
+		sendMessage("QUIT :client quit.");
+		requestKill();
 	}
 	
 	/**
@@ -104,6 +105,10 @@ public class Connection implements Runnable {
 		try {
 			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+			
+			sendMessage("PASS " + server.getPassword());
+			sendMessage("NICK " + server.getNickname());
+			sendMessage("USER " + server.getNickname() + " * * :Mike Novak");
 		} catch (Exception e) {
 			
 		}
@@ -111,6 +116,12 @@ public class Connection implements Runnable {
 		try {
 			while (!shouldKill()) {
 				String message = reader.readLine();
+				
+				if (message == null) {
+					break;
+				}
+				
+				System.out.println("Raw Message: " + message);
 				Parser.parse(message, server);
 			}
 		} catch (Exception e) {

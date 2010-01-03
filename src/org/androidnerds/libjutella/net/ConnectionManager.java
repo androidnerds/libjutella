@@ -48,7 +48,14 @@ public class ConnectionManager implements ConnectionListener {
 	 */
 	public void createNewConnection(Server s) {
 		Connection c = new Connection(s);
+		Thread t = new Thread(c);
+		
+		t.start();
 		connections.put(s, c);
+	}
+	
+	public Map<Server, Connection> getConnections() {
+		return connections;
 	}
 	
 	/**

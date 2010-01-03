@@ -81,6 +81,14 @@ public class Server {
 		return port;
 	}
 	
+	public String getNickname() {
+		return nickname;
+	}
+	
+	public String getPassword() {
+		return password;
+	}
+	
 	/**
 	 * returns the caller an entire collection of the channels active on the server.
 	 * This is not a recommended method if you are trying to modify the underlying 
