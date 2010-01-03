@@ -142,6 +142,7 @@ public class Server {
 			for (ServerListener sl : listeners) {
 				sl.onNewMessage(message, c);
 			}
+			
 			break;
 		case SERV_TOPIC_SET:
 			Channel c = channels.get(message.getParams()[message.getParams().length - 1]);
@@ -156,6 +157,31 @@ public class Server {
 			for (ServerListener sl : listeners) {
 				sl.onNewMessage(message, c);
 			}
+			
+			break;
+		case SERV_USERS:
+			Channel c = channels.get(message.getParams()[message.getParams().length - 1]);
+			String users[] = message.getText().split(" ");
+			
+			for (String user : users) {
+				c.addUser(user);
+			}
+
+			break;
+		case SERV_NO_NICK:
+		case SERV_ERRONEUS_NICK:
+		case SERV_NICK_IN_USE:
+		case SERV_NICK_COLLISION:
+			for (ServerListener sl : listeners) {
+				sl.onNickError(message);
+			}
+			
+			break;
+		case SERV_ERROR:
+			for (ServerListener sl : listeners) {
+				sl.onServerError(message);
+			}
+			
 			break;
 		}
 	}
@@ -209,5 +235,24 @@ public class Server {
 		 * @since 1
 		 */
 		public void onCloseChannel(String chan);
+		
+		/**
+		 * This method notifies the application level code that there is
+		 * an error with the provided nickname and user action is required.
+		 *
+		 * @param message the last message provided by the server containing
+		 * the error message
+		 * @since 1
+		 */
+		public void onNickError(Message message);
+		
+		/**
+		 * This method notifies the application level code that there has been
+		 * an error message received by the server.
+		 *
+		 * @param message the message object containing the error from the server
+		 * @since 1
+		 */
+		public void onServerError(Message message);
 	}
 }
