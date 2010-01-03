@@ -40,7 +40,7 @@ public class Channel {
 		return name;
 	}
 	
-	public setTopic(String t) {
+	public void setTopic(String t) {
 		topic = t;
 	}
 	

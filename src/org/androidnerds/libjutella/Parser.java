@@ -23,6 +23,14 @@ package org.androidnerds.libjutella;
  */
 public static class Parser {
 	
+	/**
+	 * This method is called from the Connection class to parse the raw message
+	 * into a Message object to be used around the rest of the api.
+	 *
+	 * @param msg this is the raw message from the server
+	 * @param server the server that the message came from
+	 * @since 1
+	 */
 	public static void parse(String msg, Server server) {
 		if (msg == null) {
 			return;
@@ -66,6 +74,77 @@ public static class Parser {
 		server.receiveMessage(message);
 	}
 	
+	/**
+	 * This method takes a Message object used by the api and 
+	 * builds a raw message that can be sent to the server
+	 *
+	 * @param msg the message to parse
+	 * @since 1
+	 */
+	protected static String buildRawMessage(Message msg) {
+		String raw = "";
+		String mesg = "";
+		
+		if (msg.getText().startsWith("/")) {
+			mesg = msg.getText().substring(1);
+			
+			String cmd = Parser.head(mesg);
+			String params = Parser.tail(mesg);
+			
+			int command = Parser.parseUserCommand(cmd);
+			
+			switch (command) {
+			case Message.CMD_JOIN:
+				raw = "JOIN " + params;
+				break;
+			case Message.CMD_PART:
+				raw = "PART" + params;
+				break;
+			case Message.CMD_PRIVMSG:
+				raw = "PRIVMSG " + head(params) + " :" + tail(params);
+				break;
+			case Message.CMD_NOTICE:
+				raw = "NOTICE " + head(params) + " :" + tail(params);
+				break;
+			case Message.CMD_QUIT:
+				if (params != null && !params.equals("")) {
+					raw = "QUIT :" + params;
+				} else {
+					raw = "QUIT :leaving";
+				}
+				break;
+			default:
+				raw = mesg;
+				break;
+			}
+		} else {
+			raw = "PRIVMSG " + msg.getSender() + " :" + msg.getText();
+		}
+		
+		return raw;
+	}
+	
+	private static String head(String msg) {
+		if (msg != null) {
+			msg = msg.split(" ", 2)[0];
+		}
+		
+		return msg;
+	}
+	
+	private static String tail(String msg) {
+		if (msg != null) {
+			String[] splitted = msg.split(" ", 2);
+            if (splitted.length == 2) {
+               msg = splitted[1];
+            } else {
+                msg = null;
+            }
+        }
+
+        return msg;
+	}
+	
 	private static int parseCommand(String raw) {
 		if (raw.startsWith("001")) {
 			return Message.SERV_CONNECTED;
@@ -105,7 +184,7 @@ public static class Parser {
 			return Message.CMD_INVITE;
 		} else if (raw.startsWith("KICK")) {
 			return Message.CMD_KICK;
-		} else if (raw.startsWIth("PRIVMSG")) {
+		} else if (raw.startsWith("PRIVMSG")) {
 			return Message.CMD_PRIVMSG;
 		} else if (raw.startsWith("NOTICE")) {
 			return Message.CMD_NOTICE;
@@ -113,6 +192,30 @@ public static class Parser {
 			return Message.CMD_PING;
 		} else if (raw.startsWith("UNKNOWN")) {
 			return Message.CMD_UNKNOWN;
+		}
+		
+		return -1;
+	}
+	
+	private static int parseUserCommand(String raw) {
+		if (raw.toLowerCase().startsWith("join")) {
+			return Message.CMD_JOIN;
+		} else if (raw.toLowerCase().startsWith("nick")) {
+			return Message.CMD_NICK;
+		} else if (raw.toLowerCase().startsWith("part")) {
+			return Message.CMD_PART;
+		} else if (raw.toLowerCase().startsWith("mode")) {
+			return Message.CMD_MODE;
+		} else if (raw.toLowerCase().startsWith("topic")) {
+			return Message.CMD_TOPIC;
+		} else if (raw.toLowerCase().startsWith("kick")) {
+			return Message.CMD_KICK;
+		} else if (raw.toLowerCase().startsWith("list")) {
+			return Message.CMD_LIST;
+		} else if (raw.toLowerCase().startsWith("msg")) {
+			return Message.CMD_PRIVMSG;
+		} else if (raw.toLowerCase().startsWith("notice")) {
+			return Message.CMD_NOTICE;
 		}
 		
 		return -1;

@@ -109,4 +109,24 @@ public class Connection implements Runnable {
 			
 		}
 	}
+	
+	/**
+	 * The ConnectionListener facilitates the sending and receiving of
+	 * messages from the library and the thread.
+	 * 
+	 * @author mike novak
+	 * @since 1
+	 */
+	public interface ConnectionListener {
+		
+		/**
+		 * This method is called from the Server class and the ConnectionManager
+		 * listens to actually send it to the proper thread.
+		 *
+		 * @param serv the server to send the message to
+		 * @param msg the message object to send
+		 * @since 1
+		 */
+		public void onSendMessage(Server serv, Message msg);
+	}
 }

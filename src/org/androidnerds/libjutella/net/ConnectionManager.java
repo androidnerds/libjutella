@@ -17,6 +17,7 @@ package org.androidnerds.libjutella.net;
 import java.util.Collections;
 import java.util.Hashtable;
 
+import org.androidnerds.libjutella.Parser;
 import org.androidnerds.libjutella.Server;
 
 /**
@@ -27,7 +28,7 @@ import org.androidnerds.libjutella.Server;
  * @author mike novak, matheiu agopian
  * @since 1
  */
-public class ConnectionManager {
+public class ConnectionManager implements ConnectionListener {
 	
 	private Hashtable<Server, Connection> connections;
 	
@@ -55,7 +56,14 @@ public class ConnectionManager {
 	 * @since 1
 	 */
 	public void closeConnection(Server s) {
-		Connection c = sconnections.get(s);
+		Connection c = connections.get(s);
 		c.disconnect();
+	}
+	
+	//ConnectionListener method.
+	public void onSendMessage(Server serv, Message msg) {
+		String raw = Parser.buildRawMessage(msg);
+		Connection conn = connections.get(serv);
+		conn.sendMessage(raw);
 	}
 }
