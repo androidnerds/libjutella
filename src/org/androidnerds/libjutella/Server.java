@@ -137,6 +137,7 @@ public class Server {
 			break;
 		case SERV_TOPIC:
 			Channel c = channels.get(message.getParams()[message.getParams().length - 1]);
+			message.setType(Message.TYPE_CHANNEL);
 			c.addMessage(message);
 			
 			for (ServerListener sl : listeners) {
@@ -152,6 +153,7 @@ public class Server {
 			String text = message.getParams()[2] + " - " + formatter.format(date);
 			
 			message.setText(text);
+			message.setType(Message.TYPE_CHANNEL);
 			c.addMessage(message);
 			
 			for (ServerListener sl : listeners) {
@@ -172,12 +174,18 @@ public class Server {
 		case SERV_ERRONEUS_NICK:
 		case SERV_NICK_IN_USE:
 		case SERV_NICK_COLLISION:
+			message.setType(Message.TYPE_SERVER);
+			messages.add(message);
+			
 			for (ServerListener sl : listeners) {
 				sl.onNickError(message);
 			}
 			
 			break;
 		case SERV_ERROR:
+			message.setType(Message.TYPE_SERVER);
+			messages.add(message);
+			
 			for (ServerListener sl : listeners) {
 				sl.onServerError(message);
 			}

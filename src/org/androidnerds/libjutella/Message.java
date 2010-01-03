@@ -154,19 +154,19 @@ public class Message {
 	public static final int SERV_NICK_COLLISION = 8;
 	public static final int SERV_ERROR = 9;
 	
-	public static final int CMD_NICK = 1;
-	public static final int CMD_QUIT = 2;
-	public static final int CMD_JOIN = 3;
-	public static final int CMD_PART = 4;
-	public static final int CMD_MODE = 5;
-	public static final int CMD_TOPIC = 6;
-	public static final int CMD_NAMES = 7;
-	public static final int CMD_LIST = 8;
-	public static final int CMD_INVITE = 9;
-	public static final int CMD_KICK = 10;
-	public static final int CMD_PRIVMSG = 11;
-	public static final int CMD_NOTICE = 12;
-	public static final int CMD_PING = 13;
-	public static final int CMD_UNKNOWN = 14;
+	public static final int CMD_NICK = 10;
+	public static final int CMD_QUIT = 11;
+	public static final int CMD_JOIN = 12;
+	public static final int CMD_PART = 13;
+	public static final int CMD_MODE = 14;
+	public static final int CMD_TOPIC = 15;
+	public static final int CMD_NAMES = 16;
+	public static final int CMD_LIST = 17;
+	public static final int CMD_INVITE = 18;
+	public static final int CMD_KICK = 19;
+	public static final int CMD_PRIVMSG = 20;
+	public static final int CMD_NOTICE = 21;
+	public static final int CMD_PING = 22;
+	public static final int CMD_UNKNOWN = 23;
 	
 }
