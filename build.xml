@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="libjutella" default="clean-build">
+	
+	<target name="clean">
+		<delete dir="bin" />
+		<delete dir="out" />
+	</target>
+
+	<target name="compile">
+		<mkdir dir="bin" />
+		<javac srcdir="src" destdir="bin" classpathref="classpath" />
+	</target>
+	
+	<target name="jar" depends="compile">
+		<mkdir dir="out" />
+		<jar destfile="out/${ant.project.name}.jar" basedir="bin" />
+	</target>
+	
+	<target name="clean-build" depends="clean,jar" />
+	
+</project>
