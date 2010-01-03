@@ -15,10 +15,13 @@
 package org.androidnerds.libjutella.net;
 
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.androidnerds.libjutella.Message;
 import org.androidnerds.libjutella.Parser;
 import org.androidnerds.libjutella.Server;
+import org.androidnerds.libjutella.net.Connection.ConnectionListener;
 
 /**
  * This class contains references to all the current connections for the client.
@@ -30,10 +33,10 @@ import org.androidnerds.libjutella.Server;
  */
 public class ConnectionManager implements ConnectionListener {
 	
-	private Hashtable<Server, Connection> connections;
+	private Map<Server, Connection> connections;
 	
 	public ConnectionManager() {
-		connections = new Collections.synchronizedMap(new Hashtable<Server, Connection>());
+		connections = Collections.synchronizedMap(new HashMap<Server, Connection>());
 	}
 	
 	/**

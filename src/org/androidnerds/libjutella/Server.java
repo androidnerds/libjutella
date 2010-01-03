@@ -14,8 +14,13 @@
  */
 package org.androidnerds.libjutella;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.androidnerds.libjutella.net.Connection.ConnectionListener;
 
@@ -33,26 +38,29 @@ public class Server {
 	private String password;
 	private String url;
 	private String name;
-	private Hashtable<String, Channel> channels;
-	private Hashtable<String, PrivateChat> privateChats;
+	private int port;
+	private Map<String, Channel> channels;
+	private Map<String, PrivateChat> privateChats;
 	private List<Message> messages;
 	private List<ServerListener> listeners;
 	private ConnectionListener connection;
 	
-	public Server(String name, String url, String nick, String pass, ConnectionListener conn) {
-		channels = Collections.synchronizedMap(new Hashtable<String, Channel>());
+	public Server(String name, String url, String nick, String pass, int prt, ConnectionListener conn) {
+		channels = Collections.synchronizedMap(new HashMap<String, Channel>());
+		privateChats = Collections.synchronizedMap(new HashMap<String, PrivateChat>());
 		messages = Collections.synchronizedList(new ArrayList<Message>());
 		listeners = Collections.synchronizedList(new ArrayList<ServerListener>());
 		
 		connection = conn;
 		nickname = nick;
 		password = pass;
+		port = prt;
 		this.name = name;
 		this.url = url;
 	}
 	
-	public Server(String url, String nick, String pass) {
-		this(url, url, nick, pass);
+	public Server(String url, String nick, String pass, int prt, ConnectionListener conn) {
+		this(url, url, nick, pass, prt, conn);
 	}
 	
 	/**
@@ -65,6 +73,14 @@ public class Server {
 		return name;
 	}
 	
+	public String getUrl() {
+		return url;
+	}
+	
+	public int getPort() {
+		return port;
+	}
+	
 	/**
 	 * returns the caller an entire collection of the channels active on the server.
 	 * This is not a recommended method if you are trying to modify the underlying 
@@ -73,7 +89,7 @@ public class Server {
 	 * @return channels actively associated with the server instance
 	 * @since 1
 	 */
-	public Hashtable<String, Channel> getChannels() {
+	public Map<String, Channel> getChannels() {
 		return channels;
 	}
 	
@@ -104,7 +120,7 @@ public class Server {
 	 * @see ServerListener
 	 */
 	public void addChannel(Channel c) {
-		channels.put(c.name, c);
+		channels.put(c.getName(), c);
 	}
 	
 	/**
@@ -118,7 +134,7 @@ public class Server {
 	 * @see ServerListener
 	 */
 	public void removeChannel(Channel c) {
-		channels.remove(c.name);
+		channels.remove(c.getName());
 	}
 	
 	/**
@@ -142,8 +158,9 @@ public class Server {
 	 * @since 1
 	 */
 	protected void receiveMessage(Message message) {
+		Channel c;
 		
-		switch(message.command) {
+		switch(message.getCommand()) {
 		case Message.SERV_CONNECTED:
 			for (ServerListener sl : listeners) {
 				sl.onClientConnected();
@@ -151,19 +168,19 @@ public class Server {
 			
 			break;
 		case Message.SERV_TOPIC:
-			Channel c = channels.get(message.getParams()[message.getParams().length - 1]);
+			c = channels.get(message.getParams()[message.getParams().length - 1]);
 			message.setType(Message.TYPE_CHANNEL);
 			c.addMessage(message);
 			
 			for (ServerListener sl : listeners) {
-				sl.onNewMessage(message, c);
+				sl.onNewChannelMessage(message, c);
 			}
 			
 			break;
 		case Message.SERV_TOPIC_SET:
-			Channel c = channels.get(message.getParams()[message.getParams().length - 1]);
+			c = channels.get(message.getParams()[message.getParams().length - 1]);
 			String timestamp = message.getParams()[3];
-			SimpleDateFormat formatter = new SimpleDataFormat("MM dd, yyyy HH:mm:ss");
+			SimpleDateFormat formatter = new SimpleDateFormat("MM dd, yyyy HH:mm:ss");
 			Date date = new Date(Long.parseLong(timestamp) * 1000);
 			String text = message.getParams()[2] + " - " + formatter.format(date);
 			
@@ -172,12 +189,12 @@ public class Server {
 			c.addMessage(message);
 			
 			for (ServerListener sl : listeners) {
-				sl.onNewMessage(message, c);
+				sl.onNewChannelMessage(message, c);
 			}
 			
 			break;
 		case Message.SERV_USERS:
-			Channel c = channels.get(message.getParams()[message.getParams().length - 1]);
+			c = channels.get(message.getParams()[message.getParams().length - 1]);
 			String users[] = message.getText().split(" ");
 			
 			for (String user : users) {
@@ -212,12 +229,12 @@ public class Server {
 			}
 			
 			synchronized (channels) {
-				for (Channel c : channels.values()) {
-					c.removeUser(message.getSender());
-					c.addUser(message.getText());
+				for (Channel channel : channels.values()) {
+					channel.removeUser(message.getSender());
+					channel.addUser(message.getText());
 					
 					for (ServerListener sl : listeners) {
-						sl.onUpdateUser(c, message.getSender(), message.getText());
+						sl.onUpdateUser(channel, message.getSender(), message.getText());
 					}
 				}
 			}
@@ -242,9 +259,9 @@ public class Server {
 			break;
 		case Message.CMD_QUIT:
 			synchronized (channels) {
-				for (Channel chan : channels.values()) {
-					if (chan.getUsers().contains(message.getSender())) {
-						chan.removeUser(message.getSender());
+				for (Channel channel : channels.values()) {
+					if (channel.getUsers().contains(message.getSender())) {
+						channel.removeUser(message.getSender());
 						
 						for (ServerListener sl : listeners) {
 							sl.onUserQuit(message);
@@ -263,12 +280,12 @@ public class Server {
 				}
 			} else {
 				synchronized (channels) {
-					for (Channel chan : channels.values()) {
-						if (chan.getUsers().contains(message.getSender())) {
-							chan.removeUser(message.getSender());
+					for (Channel channel : channels.values()) {
+						if (channel.getUsers().contains(message.getSender())) {
+							channel.removeUser(message.getSender());
 							
 							for (ServerListener sl : listeners) {
-								sl.onUserLeftChannel(message.getSender(), chan);
+								sl.onUserLeftChannel(message.getSender(), channel);
 							}
 						}
 					}
@@ -292,11 +309,11 @@ public class Server {
 					sl.onNewPrivateMessage(message, chat);
 				}
 			} else {
-				Channel chan = channels.get(dest);
-				chan.addMessage(message);
+				Channel channel = channels.get(dest);
+				channel.addMessage(message);
 				
 				for (ServerListener sl : listeners) {
-					sl.onNewChannelMessage(message, chan);
+					sl.onNewChannelMessage(message, channel);
 				}
 			}
 			
@@ -310,7 +327,11 @@ public class Server {
 			
 			break;
 		case Message.CMD_PING:
-			connection.onSendMessage("PONG " + message.getText());
+			Message msg = new Message();
+			msg.setType(Message.TYPE_SERVER);
+			msg.setCommand(Message.CMD_PONG);
+			msg.setText(message.getText());
+			connection.onSendMessage(this, msg);
 			break;
 		}
 	}

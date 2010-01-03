@@ -20,6 +20,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 
+import org.androidnerds.libjutella.Message;
+import org.androidnerds.libjutella.Parser;
+import org.androidnerds.libjutella.Server;
+
 /**
  * The connection class implements runnable and is responsible for managing the
  * connection between the server and the client.
@@ -37,6 +41,10 @@ public class Connection implements Runnable {
 	
 	public Connection(Server s) {
 		server = s;
+	}
+	
+	public void disconnect() {
+		
 	}
 	
 	/**
@@ -88,7 +96,7 @@ public class Connection implements Runnable {
 	 */
 	public void run() {
 		try {
-			socket = new Socket(server.url, server.port); 
+			socket = new Socket(server.getUrl(), server.getPort()); 
 		} catch (Exception e) {
 			
 		}

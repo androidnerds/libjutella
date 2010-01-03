@@ -21,7 +21,7 @@ package org.androidnerds.libjutella;
  * @author mike novak, matheiu agopian
  * @since 1
  */
-public static class Parser {
+public class Parser {
 	
 	/**
 	 * This method is called from the Connection class to parse the raw message
@@ -81,7 +81,7 @@ public static class Parser {
 	 * @param msg the message to parse
 	 * @since 1
 	 */
-	protected static String buildRawMessage(Message msg) {
+	public static String buildRawMessage(Message msg) {
 		String raw = "";
 		String mesg = "";
 		

@@ -108,6 +108,14 @@ public class Message {
 		return parameters;
 	}
 	
+	public String getSender() {
+		return sender;
+	}
+	
+	protected void setSender(String s) {
+		sender = s;
+	}
+	
 	/**
 	 * returns the raw timestamp of the message
 	 *
@@ -168,5 +176,6 @@ public class Message {
 	public static final int CMD_NOTICE = 21;
 	public static final int CMD_PING = 22;
 	public static final int CMD_UNKNOWN = 23;
+	public static final int CMD_PONG = 24;
 	
 }

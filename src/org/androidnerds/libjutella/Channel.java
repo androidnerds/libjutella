@@ -28,7 +28,7 @@ public class Channel {
 	
 	public Channel(Server s) {
 		users = Collections.synchronizedList(new ArrayList<String>());
-		messages = Collections.synchronizedList(new ArrayList<String>());
+		messages = Collections.synchronizedList(new ArrayList<Message>());
 		server = s;
 	}
 	
