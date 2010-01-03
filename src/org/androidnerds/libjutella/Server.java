@@ -28,16 +28,27 @@ import java.util.Hashtable;
 public class Server {
 	
 	private String nickname;
+	private String password;
 	private String url;
 	private String name;
 	private Hashtable<String, Channel> channels;
+	private Hashtable<String, PrivateChat> privateChats;
 	private List<Message> messages;
 	private List<ServerListener> listeners;
 	
-	public Server() {
+	public Server(String name, String url, String nick, String pass) {
 		channels = Collections.synchronizedMap(new Hashtable<String, Channel>());
 		messages = Collections.synchronizedList(new ArrayList<Message>());
 		listeners = Collections.synchronizedList(new ArrayList<ServerListener>());
+		
+		nickname = nick;
+		password = pass;
+		this.name = name;
+		this.url = url;
+	}
+	
+	public Server(String url, String nick, String pass) {
+		this(url, url, nick, pass);
 	}
 	
 	/**
@@ -191,6 +202,111 @@ public class Server {
 			}
 			
 			break;
+		case CMD_NICK:
+			if (message.getSender().equals(nickname)) {
+				nickname = message.getText();
+			}
+			
+			synchronized (channels) {
+				for (Channel c : channels.values()) {
+					c.removeUser(message.getSender());
+					c.addUser(message.getText());
+					
+					for (ServerListener sl : listeners) {
+						sl.onUpdateUser(c, message.getSender(), message.getText());
+					}
+				}
+			}
+			
+			break;
+		case CMD_JOIN:
+			if (message.getSender().equals(nickname)) {
+				Channel channel = new Channel(this);
+				channel.setName(message.getText());
+				
+				for (ServerListener sl : listeners) {
+					sl.onJoinChannel(channel);
+				}
+			} else {
+				Channel channel = channels.get(message.getText());
+				channel.addUser(message.getSender());
+				
+				for (ServerListener sl : listeners) {
+					sl.onUserEnteredChannel(message.getSender(), channel);
+				}
+			}
+			break;
+		case CMD_QUIT:
+			synchronized (channels) {
+				for (Channel chan : channels.values()) {
+					if (chan.getUsers().contains(message.getSender())) {
+						chan.removeUser(message.getSender());
+						
+						for (ServerListener sl : listeners) {
+							sl.onUserQuit(message);
+						}
+					}
+				}
+			}
+			
+			break;
+		case CMD_PART:
+			Channel chan = channels.get(message.getParams()[0]);
+			
+			if (message.getSender().equals(nickname)) {
+				for (ServerListener sl : listeners) {
+					sl.onLeaveChannel(channel);
+				}
+			} else {
+				synchronized (channels) {
+					for (Channel chan : channels.values()) {
+						if (chan.getUsers().contains(message.getSender())) {
+							chan.removeUser(message.getSender());
+							
+							for (ServerListener sl : listeners) {
+								sl.onUserLeftChannel(message.getSender(), chan);
+							}
+						}
+					}
+				}
+			}
+			
+			break;
+		case CMD_PRIVMSG:
+			String dest = message.getParams()[0];
+			
+			if (dest.toLowerCase().equals(nickname.toLowerCase())) {
+				if (!privateChats.containsKey(message.getSender().toLowerCase())) {
+					PrivateChat chat = new PrivateChat(message.getSender());
+					privateChats.put(message.getSender().toLowerCase(), chat);
+				}
+				
+				PrivateChat chat = privateChats.get(message.getSender().toLowerCase());
+				chat.addMessage(message);
+				
+				for (ServerListener sl : listeners) {
+					sl.onNewPrivateMessage(chat);
+				}
+			} else {
+				Channel chan = channels.get(dest);
+				chan.addMessage(message);
+				
+				for (ServerListener sl : listeners) {
+					sl.onNewChannelMessage(message, chan);
+				}
+			}
+			
+			break;
+		case CMD_NOTICE:
+			messages.add(message);
+			
+			for (ServerListener sl : listeners) {
+				sl.onNewNotice(message, this);
+			}
+			
+			break;
+		case CMD_PING:
+			break;
 		}
 	}
 	
@@ -213,7 +329,7 @@ public class Server {
 		public void onClientConnected();
 		
 		/**
-		 * The onNewMessage listener receives a finished Message object containing
+		 * The onNewChannelMessage listener receives a finished Message object containing
 		 * all the information surrounding the actual server response. For more
 		 * information on exactly what the Message contains see Message.
 		 *
@@ -221,7 +337,17 @@ public class Server {
 		 * @since 1
 		 * @see Message
 		 */
-		public void onNewMessage(Message msg, Channel chan);
+		public void onNewChannelMessage(Message msg, Channel chan);
+		
+		/**
+		 * This method let's the application level code know that a new private
+		 * message has been received.
+		 *
+		 * @param msg the actual message object.
+		 * @param chat the private chat instance receiving the message
+		 * @since 1
+		 */
+		public void onNewPrivateMessage(Message msg, PrivateChat chat);
 		
 		/**
 		 * The onJoinChannel method receives a new Channel object that is created
@@ -242,7 +368,7 @@ public class Server {
 		 * @param chan the name of the channel that has been parted
 		 * @since 1
 		 */
-		public void onCloseChannel(String chan);
+		public void onLeaveChannel(String chan);
 		
 		/**
 		 * This method notifies the application level code that there is
@@ -262,5 +388,55 @@ public class Server {
 		 * @since 1
 		 */
 		public void onServerError(Message message);
+		
+		/**
+		 * This method allows users to act upon a user updating their nick.
+		 *
+		 * @param chan the channel the user is in
+		 * @param oldnick the old nickname of the user
+		 * @param newnick the new nickname of the user
+		 * @since 1
+		 */
+		public void onUpdateUser(Channel chan, String oldnick, String newnick);
+		
+		/**
+		 * This method notifies the application level code that the following
+		 * user has entered the channel.
+		 *
+		 * @param user the user's nickname
+		 * @param chan the channel the user entered
+		 * @since 1
+		 */
+		public void onUserEnteredChannel(String user, Channel chan);
+		
+		/**
+		 * This method notifies the application level code that the following
+		 * user has quit the server. The user that quit is actually the sender
+		 * of the message.
+		 *
+		 * @param message the message associated with the quit
+		 * @since 1
+		 */
+		public void onUserQuit(Message message);
+		
+		/**
+		 * This method notifies the application level code that the following
+		 * user has left the channel.
+		 *
+		 * @param user the user's nickname
+		 * @param chan the channel the user left
+		 * @since 1
+		 */
+		public void onUserLeftChannel(String user, Channel chan);
+		
+		/**
+		 * Notifies the application level code that a notice has been
+		 * received by the client.
+		 *
+		 * @param msg the message received
+		 * @param serv the server that has received the message
+		 * @since 1
+		 */
+		public void onNewNotice(Message msg, Server serv);
 	}
 }
